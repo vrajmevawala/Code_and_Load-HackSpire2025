@@ -1,33 +1,29 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { useRouter } from "next/navigation"
-import { analyzeResponse } from "@/lib/analyze-response"
-import { detectEmotions } from "@/lib/emotion-detection"
-import { Send, ArrowRight, Brain, RefreshCw } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { EmotionAnalysis } from "@/components/emotion-analysis"
-import type { EmotionAnalysisResult } from "@/lib/emotion-detection"
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
+import { analyzeResponse } from "@/lib/analyze-response";
+import { detectEmotions } from "@/lib/emotion-detection";
+import { Send, ArrowRight, Brain, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 type Message = {
-  id: string
-  role: "system" | "user" | "assistant"
-  content: string
-  timestamp: Date
-}
+  id: string;
+  role: "system" | "user" | "assistant";
+  content: string;
+  timestamp: Date;
+};
 
-type CheckInStage = "intro" | "conversation" | "processing" | "analysis" | "complete"
+type CheckInStage = "intro" | "conversation" | "processing" | "analysis" | "complete";
 
 type SentimentAnalysis = {
-  happiness: number
-  anxiety: number
-  energy: number
-}
+  happiness: number;
+  anxiety: number;
+  energy: number;
+};
 
 const initialMessages: Message[] = [
   {
@@ -36,71 +32,70 @@ const initialMessages: Message[] = [
     content: "Hi there! I'm your mental wellness companion. How are you feeling today?",
     timestamp: new Date(),
   },
-]
+];
 
 export function CheckInInterface() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
-  const [input, setInput] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [stage, setStage] = useState<CheckInStage>("intro")
-  const [progress, setProgress] = useState(0)
-  const [analysis, setAnalysis] = useState<SentimentAnalysis | null>(null)
-  const [emotionAnalysis, setEmotionAnalysis] = useState<EmotionAnalysisResult | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [stage, setStage] = useState<CheckInStage>("intro");
+  const [progress, setProgress] = useState(0);
+  const [analysis, setAnalysis] = useState<SentimentAnalysis | null>(null);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     if (stage === "processing") {
       const interval = setInterval(() => {
         setProgress((prev: number) => {
           if (prev >= 100) {
-            clearInterval(interval)
-            return 100
+            clearInterval(interval);
+            return 100;
           }
-          return prev + 5
-        })
-      }, 150)
+          return prev + 5;
+        });
+      }, 150);
 
       const timeout = setTimeout(async () => {
         try {
-          const result = await detectEmotions(messages)
-          setEmotionAnalysis(result)
-          setStage("analysis")
+          await detectEmotions(messages);
+          setStage("analysis");
         } catch (error) {
-          console.error("Error analyzing emotions:", error)
-          setStage("complete")
+          console.error("Error analyzing emotions:", error);
+          setStage("complete");
         }
-      }, 3000)
+      }, 3000);
 
       return () => {
-        clearInterval(interval)
-        clearTimeout(timeout)
-      }
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
     }
-  }, [stage, messages])
+  }, [stage, messages]);
 
   const handleSendMessage = async () => {
-    if (!input.trim()) return
+    if (!input.trim()) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
       content: input,
       timestamp: new Date(),
-    }
+    };
 
-    setMessages((prev: Message[]) => [...prev, userMessage])
-    setInput("")
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
 
     try {
-      const result = await analyzeResponse(messages, input)
+      const result = await analyzeResponse(messages, input);
 
-      setMessages((prev: Message[]) => [
+      setMessages((prev) => [
         ...prev,
         {
           id: `assistant-${Date.now()}`,
@@ -108,13 +103,12 @@ export function CheckInInterface() {
           content: result.response,
           timestamp: new Date(),
         },
-      ])
+      ]);
 
-      setAnalysis(result.sentiment)
-
+      setAnalysis(result.sentiment);
     } catch (error) {
-      console.error("Error processing message:", error)
-      setMessages((prev: Message[]) => [
+      console.error("Error processing message:", error);
+      setMessages((prev) => [
         ...prev,
         {
           id: `error-${Date.now()}`,
@@ -122,38 +116,37 @@ export function CheckInInterface() {
           content: "I'm sorry, I'm having trouble processing your response. Could you try again?",
           timestamp: new Date(),
         },
-      ])
+      ]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+      e.preventDefault();
+      handleSendMessage();
     }
-  }
+  };
 
   const handleStartCheckIn = () => {
-    setStage("conversation")
-  }
+    setStage("conversation");
+  };
 
   const handleViewResults = () => {
-    router.push("/dashboard")
-  }
+    router.push("/dashboard");
+  };
 
   const handleRestartCheckIn = () => {
-    setMessages(initialMessages)
-    setStage("intro")
-    setProgress(0)
-    setAnalysis(null)
-    setEmotionAnalysis(null)
-  }
+    setMessages(initialMessages);
+    setStage("intro");
+    setProgress(0);
+    setAnalysis(null);
+  };
 
   const handleCompleteAnalysis = () => {
-    setStage("complete")
-  }
+    setStage("complete");
+  };
 
   if (stage === "intro") {
     return (
@@ -189,14 +182,11 @@ export function CheckInInterface() {
                   </ul>
                 </div>
                 <div className="flex-1 flex justify-center">
-                  <div className="relative">
-                    <div className="relative bg-white dark:bg-gray-800 rounded-full p-6">
-                      <Brain className="h-24 w-24 text-teal-600 dark:text-teal-400" />
-                    </div>
+                  <div className="relative bg-white dark:bg-gray-800 rounded-full p-6">
+                    <Brain className="h-24 w-24 text-teal-600 dark:text-teal-400" />
                   </div>
                 </div>
               </div>
-
               <div className="flex justify-center pt-4">
                 <Button onClick={handleStartCheckIn} size="lg" className="bg-teal-600 hover:bg-teal-700 text-white">
                   Start Your Check-In
@@ -207,30 +197,26 @@ export function CheckInInterface() {
           </Card>
         </motion.div>
       </div>
-    )
+    );
   }
 
-  // if (stage === "processing") {
-  //   return (
-  //     <div className="container mx-auto px-4 py-24">
-  //       <Card className="max-w-2xl mx-auto shadow-lg border-2">
-  //         <CardContent className="p-8 flex flex-col items-center text-center">
-  //           <Brain className="h-16 w-16 text-teal-600 mb-6 animate-pulse" />
-  //           <h2 className="text-2xl font-bold text-teal-700 mb-2">Analyzing...</h2>
-  //           <Progress value={progress} className="w-full max-w-md my-4" />
-  //           <p className="text-gray-500">{progress}% complete</p>
-  //         </CardContent>
-  //       </Card>
-  //     </div>
-  //   )
-  // }
-
-  if (stage === "analysis" && emotionAnalysis) {
+  if (stage === "analysis") {
     return (
-      <div className="container mx-auto px-4 py-24">
-        <EmotionAnalysis analysis={emotionAnalysis} onComplete={handleCompleteAnalysis} />
+      <div className="container mx-auto px-4 py-24 text-center">
+        <h2 className="text-2xl font-bold text-teal-700 dark:text-teal-400 mb-4">
+          Analysis Complete
+        </h2>
+        <p className="text-gray-600 dark:text-gray-300 mb-8">
+          Your emotional analysis is complete. You can now view your results!
+        </p>
+        <Button
+          onClick={handleCompleteAnalysis}
+          className="bg-teal-600 hover:bg-teal-700 text-white"
+        >
+          View Results
+        </Button>
       </div>
-    )
+    );
   }
 
   if (stage === "complete") {
@@ -296,6 +282,7 @@ export function CheckInInterface() {
     )
   }
 
+
   return (
     <div className="container mx-auto px-4 py-24">
       <Card className="max-w-2xl mx-auto shadow-lg border-2">
@@ -320,10 +307,9 @@ export function CheckInInterface() {
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       <div className={`text-xs mt-1 ${message.role === "user" ? "text-teal-100" : "text-gray-400"}`}>
-                        {new Intl.DateTimeFormat("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }).format(message.timestamp)}
+                        {new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit" }).format(
+                          message.timestamp
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -332,7 +318,6 @@ export function CheckInInterface() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Updated input section with Analyze Button */}
             <div className="p-4 border-t">
               <div className="flex flex-col gap-4">
                 <div className="flex items-end gap-2">
@@ -368,5 +353,5 @@ export function CheckInInterface() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
