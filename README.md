@@ -21,7 +21,7 @@ MindMosaic is an AI-powered mental wellness companion that allows users to:
 ## ⚙️ Tech Stack
 
 ### 🖥️ Frontend
-- **React.js** – Modern UI framework for fast, responsive design
+- **TypeScript.js** – Modern UI framework for fast, responsive design
 - **Tailwind CSS** – Utility-first styling for quick and clean visuals
 - **Axios** – For making API calls to the backend
 - **Chart.js** – Mood trend visualization (optional)
