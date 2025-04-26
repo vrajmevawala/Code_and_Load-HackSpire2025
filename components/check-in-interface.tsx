@@ -9,6 +9,7 @@ import { analyzeResponse } from "@/lib/analyze-response";
 import { detectEmotions } from "@/lib/emotion-detection";
 import { Send, ArrowRight, Brain, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCheckInStorage } from "@/lib/storage"
 
 type Message = {
   id: string;
@@ -44,6 +45,8 @@ export function CheckInInterface() {
   const [stage, setStage] = useState<CheckInStage>("intro");
   const [progress, setProgress] = useState(0);
   const [analysis, setAnalysis] = useState<SentimentAnalysis | null>(null);
+  const [lastResult, setLastResult] = useState<any>(null);
+  const { addResult } = useCheckInStorage()
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -97,6 +100,7 @@ export function CheckInInterface() {
 
     try {
       const result = await analyzeResponse(messages, input);
+      setLastResult(result);
 
       setMessages((prev) => [
         ...prev,
@@ -148,6 +152,13 @@ export function CheckInInterface() {
   };
 
   const handleCompleteAnalysis = () => {
+    if (analysis && lastResult) {
+      addResult({
+        sentiment: analysis,
+        topics: lastResult.topics || [],
+        recommendations: lastResult.recommendations || [],
+      });
+    }
     setStage("complete");
   };
 

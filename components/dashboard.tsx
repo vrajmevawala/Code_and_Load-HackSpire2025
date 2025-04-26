@@ -18,11 +18,12 @@ import {
   Pie,
   Cell,
 } from "recharts"
-import { Loader2, RefreshCw, Calendar, Clock, ArrowRight, Download, Share2 } from "lucide-react"
+import { Loader2, RefreshCw, Calendar, Clock, ArrowRight, Download, Share2, Brain } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { useCheckInStorage } from "@/lib/storage"
 
 type EmotionData = {
   date: string
@@ -51,108 +52,40 @@ type InsightCard = {
 
 export function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
-  const [emotionData, setEmotionData] = useState<EmotionData[]>([])
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([])
-  const [currentMood, setCurrentMood] = useState<string>("")
   const [timeRange, setTimeRange] = useState<"week" | "month" | "year">("week")
-  const [insights, setInsights] = useState<InsightCard[]>([])
+  const { 
+    getResultsByTimeRange, 
+    getAverageSentiment, 
+    getRecentTopics, 
+    getRecentRecommendations,
+    toggleRecommendationComplete 
+  } = useCheckInStorage()
 
   useEffect(() => {
-    // Simulate loading data
-    const loadData = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Mock data
-      setEmotionData([
-        { date: "Mon", happiness: 65, anxiety: 40, energy: 70, anger: 20, sadness: 30 },
-        { date: "Tue", happiness: 60, anxiety: 45, energy: 65, anger: 25, sadness: 35 },
-        { date: "Wed", happiness: 70, anxiety: 35, energy: 75, anger: 15, sadness: 25 },
-        { date: "Thu", happiness: 75, anxiety: 30, energy: 80, anger: 10, sadness: 20 },
-        { date: "Fri", happiness: 72, anxiety: 32, energy: 78, anger: 12, sadness: 22 },
-        { date: "Sat", happiness: 80, anxiety: 25, energy: 85, anger: 8, sadness: 15 },
-        { date: "Sun", happiness: 78, anxiety: 28, energy: 82, anger: 10, sadness: 18 },
-      ])
-
-      setRecommendations([
-        {
-          id: "rec1",
-          title: "Morning Meditation",
-          description: "A 10-minute guided meditation to start your day with clarity and calm.",
-          type: "meditation",
-          duration: 10,
-          completed: false,
-        },
-        {
-          id: "rec2",
-          title: "Deep Breathing Exercise",
-          description: "A 5-minute breathing technique to reduce anxiety and increase focus.",
-          type: "exercise",
-          duration: 5,
-          completed: true,
-        },
-        {
-          id: "rec3",
-          title: "Nature Walk",
-          description: "Spend 20 minutes outdoors to boost your mood and energy levels.",
-          type: "activity",
-          duration: 20,
-          completed: false,
-        },
-        {
-          id: "rec4",
-          title: "Gratitude Journaling",
-          description: "Take 5 minutes to write down three things you're grateful for today.",
-          type: "exercise",
-          duration: 5,
-          completed: false,
-        },
-        {
-          id: "rec5",
-          title: "Body Scan Meditation",
-          description: "A 15-minute meditation to release tension and connect with your body.",
-          type: "meditation",
-          duration: 15,
-          completed: false,
-        },
-      ])
-
-      setInsights([
-        {
-          title: "Improved Sleep Pattern",
-          description: "Your sleep quality has improved by 15% this week compared to last week.",
-          type: "positive",
-          icon: <Clock className="h-5 w-5 text-green-500" />,
-        },
-        {
-          title: "Anxiety Triggers",
-          description: "Work-related topics appear to trigger anxiety peaks in your check-ins.",
-          type: "negative",
-          icon: <Clock className="h-5 w-5 text-orange-500" />,
-        },
-        {
-          title: "Consistent Check-ins",
-          description: "You've completed 5 check-ins this week, maintaining your streak!",
-          type: "positive",
-          icon: <Calendar className="h-5 w-5 text-green-500" />,
-        },
-      ])
-
-      setCurrentMood("Moderately positive with some anxiety")
-      setIsLoading(false)
-    }
-
-    loadData()
+    setIsLoading(false)
   }, [])
 
-  const handleToggleComplete = (id: string) => {
-    setRecommendations((prev) => prev.map((rec) => (rec.id === id ? { ...rec, completed: !rec.completed } : rec)))
+  const results = getResultsByTimeRange(timeRange)
+  const averageSentiment = getAverageSentiment(timeRange)
+  const recentTopics = getRecentTopics()
+  const recommendations = getRecentRecommendations()
+
+  const getMoodDescription = () => {
+    if (!averageSentiment) return "No data available"
+    
+    const { happiness, anxiety, energy, anger, sadness, calmness } = averageSentiment
+    
+    if (happiness > 70 && anxiety < 30 && anger < 20 && sadness < 20) {
+      return "Very positive and calm"
+    } else if (happiness > 50 && anxiety < 50 && anger < 30 && sadness < 30) {
+      return "Generally positive"
+    } else if (anxiety > 50 || anger > 40 || sadness > 40) {
+      return "Experiencing some challenges"
+    } else {
+      return "Neutral"
+    }
   }
 
-  const handleTimeRangeChange = (value: string) => {
-    setTimeRange(value as "week" | "month" | "year")
-  }
-
-  // Updated vibrant colors for better visual appeal
   const getEmotionColor = (type: string) => {
     switch (type) {
       case "happiness":
@@ -165,6 +98,8 @@ export function Dashboard() {
         return "#ef4444" // Vibrant red
       case "sadness":
         return "#3b82f6" // Vibrant blue
+      case "calmness":
+        return "#8b5cf6" // Vibrant purple
       default:
         return "#22c55e"
     }
@@ -183,23 +118,51 @@ export function Dashboard() {
     }
   }
 
-  const pieData = [
-    { name: "Happiness", value: 65 },
-    { name: "Anxiety", value: 35 },
-    { name: "Anger", value: 15 },
-    { name: "Sadness", value: 25 }
+  const pieData = averageSentiment
+    ? [
+        { name: "Happiness", value: averageSentiment.happiness },
+        { name: "Anxiety", value: averageSentiment.anxiety },
+        { name: "Anger", value: averageSentiment.anger },
+        { name: "Sadness", value: averageSentiment.sadness },
+        { name: "Calmness", value: averageSentiment.calmness },
+      ]
+    : []
+
+  const COLORS = ["#22c55e", "#ef4444", "#f97316", "#3b82f6", "#8b5cf6"]
+
+  const metrics = averageSentiment
+    ? [
+        { label: "Happiness", value: averageSentiment.happiness, color: "bg-green-500" },
+        { label: "Anxiety", value: averageSentiment.anxiety, color: "bg-orange-500" },
+        { label: "Energy", value: averageSentiment.energy, color: "bg-yellow-500" },
+        { label: "Anger", value: averageSentiment.anger, color: "bg-red-500" },
+        { label: "Sadness", value: averageSentiment.sadness, color: "bg-blue-500" },
+        { label: "Calmness", value: averageSentiment.calmness, color: "bg-purple-500" },
+      ]
+    : []
+
+  const insights = [
+    {
+      title: "Recent Topics",
+      description: recentTopics.length > 0 ? `You've been discussing: ${recentTopics.join(", ")}` : "No recent topics to show",
+      type: "neutral" as const,
+      icon: <Calendar className="h-5 w-5 text-blue-500" />,
+    },
+    {
+      title: "Check-in Frequency",
+      description: `You've completed ${results.length} check-ins in the last ${timeRange}`,
+      type: "positive" as const,
+      icon: <Clock className="h-5 w-5 text-green-500" />,
+    },
   ]
 
-  // Updated vibrant colors for pie chart
-  const COLORS = ["#22c55e", "#ef4444", "#f97316", "#3b82f6"]
+  const handleToggleComplete = (id: string) => {
+    toggleRecommendationComplete(id)
+  }
 
-  const metrics = [
-    { label: "Happiness", value: 75, color: "bg-green-500" },
-    { label: "Anxiety", value: 30, color: "bg-orange-500" },
-    { label: "Energy", value: 80, color: "bg-yellow-500" },
-    { label: "Anger", value: 15, color: "bg-red-500" },
-    { label: "Sadness", value: 25, color: "bg-blue-500" }
-  ]
+  const handleTimeRangeChange = (value: string) => {
+    setTimeRange(value as "week" | "month" | "year")
+  }
 
   return (
     <div className="container mx-auto px-4 py-24">
@@ -242,340 +205,160 @@ export function Dashboard() {
             <Card className="overflow-hidden border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
               <CardHeader className="pb-2">
                 <CardTitle className="text-teal-700 dark:text-teal-400">Current Mood</CardTitle>
-                <CardDescription>Based on your recent check-in</CardDescription>
+                <CardDescription>Based on your recent check-ins</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
                     <div className="w-12 h-12 rounded-full bg-teal-200 dark:bg-teal-800/50 flex items-center justify-center">
-                      <div className="w-8 h-8 rounded-full bg-teal-600 dark:bg-teal-600"></div>
+                      <Brain className="h-6 w-6 text-teal-600 dark:text-teal-400" />
                     </div>
                   </div>
                   <div>
-                    <p className="text-xl font-medium">{currentMood}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Updated 2 hours ago</p>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                      {getMoodDescription()}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {averageSentiment
+                        ? `Based on ${results.length} check-ins in the last ${timeRange}`
+                        : "Complete a check-in to see your mood"}
+                    </p>
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="bg-gray-50 dark:bg-gray-800/50 pt-3 pb-3">
-                <Button asChild variant="ghost" size="sm" className="w-full justify-between">
-                  <Link href="/check-in" className="flex items-center">
-                    <span>New Check-In</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardFooter>
             </Card>
 
-            <Card className="md:col-span-2 border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div>
-                  <CardTitle className="text-teal-700 dark:text-teal-400">Mood Trends</CardTitle>
-                  <CardDescription>Your emotional patterns over time</CardDescription>
-                </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[220px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={emotionData}>
-                      <defs>
-                        <linearGradient id="colorHappiness" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="colorAnxiety" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="colorEnergy" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="colorAnger" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="colorSadness" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "rgba(255, 255, 255, 0.9)",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                          border: "none",
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="happiness"
-                        stroke="#22c55e"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorHappiness)"
-                        name="Happiness"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="anxiety"
-                        stroke="#ef4444"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorAnxiety)"
-                        name="Anxiety"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="energy"
-                        stroke="#3b82f6"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorEnergy)"
-                        name="Energy"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="anger"
-                        stroke="#f97316"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorAnger)"
-                        name="Anger"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="sadness"
-                        stroke="#3b82f6"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorSadness)"
-                        name="Sadness"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-              <CardFooter className="bg-gray-50 dark:bg-gray-800/50 pt-3 pb-3 flex justify-between">
-                <div className="flex items-center gap-6">
-                  {["happiness", "anxiety", "energy", "anger", "sadness"].map((type) => (
-                    <div key={type} className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getEmotionColor(type) }} />
-                      <span className="text-sm capitalize">{type}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" className="h-8 flex items-center gap-1">
-                    <Download className="h-3 w-3" />
-                    <span>Export</span>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-8 flex items-center gap-1">
-                    <Share2 className="h-3 w-3" />
-                    <span>Share</span>
-                  </Button>
-                </div>
-              </CardFooter>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
+            <Card className="overflow-hidden border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
               <CardHeader className="pb-2">
                 <CardTitle className="text-teal-700 dark:text-teal-400">Emotional Balance</CardTitle>
-                <CardDescription>Happiness vs. Anxiety ratio</CardDescription>
+                <CardDescription>Your emotional state distribution</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[200px] flex items-center justify-center">
+                <div className="h-[200px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={pieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
+                        labelLine={false}
                         outerRadius={80}
-                        paddingAngle={5}
+                        fill="#8884d8"
                         dataKey="value"
                       >
                         {pieData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "rgba(255, 255, 255, 0.9)",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                          border: "none",
-                        }}
-                      />
+                      <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
-              <CardFooter className="bg-gray-50 dark:bg-gray-800/50 pt-3 pb-3">
-                <div className="w-full flex justify-around">
-                  {pieData.map((entry, index) => (
-                    <div key={`legend-${index}`} className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                      />
-                      <span className="text-sm">
-                        {entry.name}: {entry.value}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardFooter>
             </Card>
 
-            <Card className="md:col-span-2 border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
+            <Card className="overflow-hidden border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
               <CardHeader className="pb-2">
-                <CardTitle className="text-teal-700 dark:text-teal-400">Wellness Insights</CardTitle>
-                <CardDescription>Personalized observations based on your data</CardDescription>
+                <CardTitle className="text-teal-700 dark:text-teal-400">Key Metrics</CardTitle>
+                <CardDescription>Your emotional indicators</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {insights.map((insight, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                    >
-                      <Card>
-                        <CardContent className="p-4 flex items-start gap-3">
-                          <div
-                            className={`p-2 rounded-full ${
-                              insight.type === "positive"
-                                ? "bg-green-100 dark:bg-green-900/30"
-                                : insight.type === "negative"
-                                  ? "bg-orange-100 dark:bg-orange-900/30"
-                                  : "bg-blue-100 dark:bg-blue-900/30"
-                            }`}
-                          >
-                            {insight.icon}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1">
-                              <h3 className="font-medium">{insight.title}</h3>
-                              <Badge className={getInsightBadgeColor(insight.type)}>
-                                {insight.type === "positive"
-                                  ? "Positive"
-                                  : insight.type === "negative"
-                                    ? "Action Needed"
-                                    : "Neutral"}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">{insight.description}</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
+                  {metrics.map((metric) => (
+                    <div key={metric.label} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {metric.label}
+                        </span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {metric.value}%
+                        </span>
+                      </div>
+                      <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${metric.color} transition-all duration-500`}
+                          style={{ width: `${metric.value}%` }}
+                        />
+                      </div>
+                    </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          <Card className="border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-teal-700 dark:text-teal-400">Personalized Recommendations</CardTitle>
-              <CardDescription>Based on your emotional state and patterns</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="all" className="w-full">
-                <TabsList className="mb-4 w-full justify-start">
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="meditation">Meditation</TabsTrigger>
-                  <TabsTrigger value="exercise">Exercises</TabsTrigger>
-                  <TabsTrigger value="activity">Activities</TabsTrigger>
-                </TabsList>
-
-                {["all", "meditation", "exercise", "activity"].map((tabValue) => (
-                  <TabsContent key={tabValue} value={tabValue} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {recommendations
-                        .filter((rec) => tabValue === "all" || rec.type === tabValue)
-                        .map((rec) => (
-                          <Card
-                            key={rec.id}
-                            className={`overflow-hidden transition-all ${rec.completed ? "bg-gray-50 dark:bg-gray-800/50 opacity-75" : ""}`}
-                          >
-                            <CardHeader className="p-4 pb-2">
-                              <div className="flex items-center justify-between">
-                                <CardTitle className="text-base">{rec.title}</CardTitle>
-                                <Badge variant="outline" className="text-xs">
-                                  {rec.duration} min
-                                </Badge>
-                              </div>
-                            </CardHeader>
-                            <CardContent className="p-4 pt-2">
-                              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{rec.description}</p>
-                              <div className="flex items-center justify-between">
-                                <Button
-                                  size="sm"
-                                  variant={rec.completed ? "outline" : "default"}
-                                  className={
-                                    rec.completed
-                                      ? ""
-                                      : "bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700 text-white"
-                                  }
-                                  onClick={() => handleToggleComplete(rec.id)}
-                                >
-                                  {rec.completed ? "Completed" : "Start Now"}
-                                </Button>
-                                <Badge
-                                  className={`capitalize ${
-                                    rec.type === "meditation"
-                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                                      : rec.type === "exercise"
-                                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                        : "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
-                                  }`}
-                                >
-                                  {rec.type}
-                                </Badge>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="overflow-hidden border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-teal-700 dark:text-teal-400">Recent Insights</CardTitle>
+                <CardDescription>Key observations from your check-ins</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {insights.map((insight, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+                    >
+                      <div className="p-2 rounded-full bg-gray-100 dark:bg-gray-700">
+                        {insight.icon}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 dark:text-gray-100">{insight.title}</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{insight.description}</p>
+                      </div>
                     </div>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {metrics.map((metric, index) => (
-              <Card key={index} className="border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-teal-700 dark:text-teal-400">{metric.label}</CardTitle>
-                  <CardDescription>Current level</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{metric.value}%</div>
-                  <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
-                    <motion.div
-                      className={`h-full ${metric.color}`}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${metric.value}%` }}
-                      transition={{ duration: 1, delay: 0.2 }}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <Card className="overflow-hidden border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-teal-700 dark:text-teal-400">Recommendations</CardTitle>
+                <CardDescription>Personalized activities for you</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-4">
+                  {recommendations.length > 0 ? (
+                    recommendations.map((rec) => (
+                      <div
+                        key={rec.id}
+                        className={`flex items-start gap-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 transition-all ${
+                          rec.completed ? "opacity-75" : ""
+                        }`}
+                      >
+                        <div className="p-2 rounded-full bg-gray-100 dark:bg-gray-700">
+                          <Clock className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                            {rec.title}
+                          </h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                            {rec.description}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleComplete(rec.id)}
+                          className={`shrink-0 ${
+                            rec.completed ? "bg-green-100 dark:bg-green-900/30" : ""
+                          }`}
+                        >
+                          {rec.completed ? "Completed" : "Mark Complete"}
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                      No recommendations available. Complete a check-in to get personalized recommendations.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </motion.div>
       )}
