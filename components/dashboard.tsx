@@ -331,11 +331,11 @@ export function Dashboard() {
                         <div className="p-2 rounded-full bg-gray-100 dark:bg-gray-700">
                           <Clock className="h-5 w-5 text-teal-600 dark:text-teal-400" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 dark:text-gray-100 break-words">
                             {rec.title}
                           </h4>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 break-words">
                             {rec.description}
                           </p>
                         </div>
