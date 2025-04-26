@@ -23,6 +23,9 @@ type SentimentAnalysis = {
   happiness: number;
   anxiety: number;
   energy: number;
+  anger: number;
+  sadness: number;
+  calmness: number;
 };
 
 const initialMessages: Message[] = [
@@ -241,6 +244,9 @@ export function CheckInInterface() {
                     { label: "Happiness", value: analysis.happiness, color: "bg-green-500" },
                     { label: "Energy", value: analysis.energy, color: "bg-blue-500" },
                     { label: "Anxiety", value: analysis.anxiety, color: "bg-orange-500" },
+                    { label: "Anger", value: analysis.anger, color: "bg-red-500" },
+                    { label: "Sadness", value: analysis.sadness, color: "bg-blue-500" },
+                    { label: "Calmness", value: analysis.calmness, color: "bg-purple-500" }
                   ].map((metric) => (
                     <Card key={metric.label} className="overflow-hidden">
                       <CardHeader className="p-4 pb-2">

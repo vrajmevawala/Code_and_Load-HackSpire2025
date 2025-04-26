@@ -15,6 +15,9 @@ type AnalysisResult = {
     happiness: number
     anxiety: number
     energy: number
+    anger: number
+    sadness: number
+    calmness: number
   }
   topics: string[]
   recommendations: string[]
@@ -56,7 +59,10 @@ export async function analyzeResponse(previousMessages: Message[], userInput: st
     "sentiment": {
       "happiness": number,
       "anxiety": number,
-      "energy": number
+      "energy": number,
+      "anger": number,
+      "sadness": number,
+      "calmness": number
     },
     "topics": ["topic1", "topic2"],
     "recommendations": ["recommendation1", "recommendation2"],
@@ -98,6 +104,9 @@ export async function analyzeResponse(previousMessages: Message[], userInput: st
         happiness: 50,
         anxiety: 50,
         energy: 50,
+        anger: 0,
+        sadness: 0,
+        calmness: 50
       },
       topics: ["general"],
       recommendations: ["Take a few deep breaths", "Consider a short walk outside"],

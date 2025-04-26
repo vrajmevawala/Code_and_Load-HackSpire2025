@@ -13,7 +13,20 @@ export async function analyzeResponse(messages: any[], userInput: string) {
     throw new Error('Failed to analyze response');
   }
 
-  return response.json();
+  const data = await response.json();
+  
+  // Ensure the sentiment object has all required fields
+  if (!data.sentiment.anger) {
+    data.sentiment.anger = 0;
+  }
+  if (!data.sentiment.sadness) {
+    data.sentiment.sadness = 0;
+  }
+  if (!data.sentiment.calmness) {
+    data.sentiment.calmness = 0;
+  }
+
+  return data;
 }
 
 export async function detectEmotions(messages: any[]) {
