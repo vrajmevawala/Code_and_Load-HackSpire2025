@@ -29,16 +29,16 @@ MindMosaic is an AI-powered mental wellness companion that allows users to:
 ### 🔧 Backend
 - **Flask** – Lightweight Python framework for API routes
 - **Transformers (Hugging Face)** – Emotion analysis using pre-trained NLP models
-- **OpenAI API** *(optional)* – For dynamic follow-up questions and motivation
-- **MongoDB Atlas** – Cloud database to store user logs and emotional data
+- **Gemini API** – Advanced LLM integration for enhanced user interaction and content generation
 
 ---
 
 ## 🚀 Features
 
 - 🧘‍♀️ Conversational emotional check-in (chat-style)
-- 🤖 AI-based emotion analysis (e.g., joy, sadness, anxiety)
+- 🤖 AI-based emotion analysis (e.g., happy, sadness, anxiety, angry)
 - 💬 Smart follow-up questions based on detected mood
 - 🌤️ Personalized motivational messages and mental wellness tips
+- 🌍 Multi-language support for a more inclusive experience
 - 📈 Mood history dashboard
 - 🔐 Optional user login
