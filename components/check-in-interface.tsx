@@ -1,6 +1,5 @@
 "use client"
 
-import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -50,12 +49,10 @@ export function CheckInInterface() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
-  // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Simulate progress for processing stage
   useEffect(() => {
     if (stage === "processing") {
       const interval = setInterval(() => {
@@ -68,7 +65,6 @@ export function CheckInInterface() {
         })
       }, 150)
 
-      // After progress reaches 100%, perform emotion analysis
       const timeout = setTimeout(async () => {
         try {
           const result = await detectEmotions(messages)
@@ -90,7 +86,6 @@ export function CheckInInterface() {
   const handleSendMessage = async () => {
     if (!input.trim()) return
 
-    // Add user message
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -103,10 +98,8 @@ export function CheckInInterface() {
     setIsLoading(true)
 
     try {
-      // Analyze the response and get AI reply
       const result = await analyzeResponse(messages, input)
 
-      // Add AI response
       setMessages((prev: Message[]) => [
         ...prev,
         {
@@ -117,13 +110,8 @@ export function CheckInInterface() {
         },
       ])
 
-      // Update sentiment analysis
       setAnalysis(result.sentiment)
 
-      // Check if we should end the conversation
-      if (result.shouldComplete) {
-        setStage("processing")
-      }
     } catch (error) {
       console.error("Error processing message:", error)
       setMessages((prev: Message[]) => [
@@ -167,12 +155,11 @@ export function CheckInInterface() {
     setStage("complete")
   }
 
-  // Render different stages
   if (stage === "intro") {
     return (
       <div className="container mx-auto px-4 py-24">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <Card className="max-w-3xl mx-auto shadow-lg border-2 border-gray-100 dark:border-gray-800">
+          <Card className="max-w-3xl mx-auto shadow-lg border-2">
             <CardHeader className="text-center pb-2">
               <CardTitle className="text-3xl font-bold text-teal-700 dark:text-teal-400">
                 Mental Wellness Check-In
@@ -188,17 +175,11 @@ export function CheckInInterface() {
                   <ul className="space-y-3">
                     {[
                       "Have a natural conversation about how you're feeling",
-                      "Our Gemini AI analyzes your responses to understand your emotional state",
-                      "Receive personalized insights and recommendations",
-                      "Track your progress over time on your dashboard",
+                      "Our AI analyzes your responses",
+                      "Receive insights and recommendations",
+                      "Track your progress over time",
                     ].map((step, i) => (
-                      <motion.li
-                        key={i}
-                        className="flex items-start gap-3"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: 0.1 * i }}
-                      >
+                      <motion.li key={i} className="flex items-start gap-3">
                         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400 text-sm font-medium">
                           {i + 1}
                         </div>
@@ -209,7 +190,6 @@ export function CheckInInterface() {
                 </div>
                 <div className="flex-1 flex justify-center">
                   <div className="relative">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full blur opacity-30 dark:opacity-40"></div>
                     <div className="relative bg-white dark:bg-gray-800 rounded-full p-6">
                       <Brain className="h-24 w-24 text-teal-600 dark:text-teal-400" />
                     </div>
@@ -218,15 +198,9 @@ export function CheckInInterface() {
               </div>
 
               <div className="flex justify-center pt-4">
-                <Button
-                  onClick={handleStartCheckIn}
-                  size="lg"
-                  className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700 group text-white"
-                >
-                  <span className="flex items-center gap-2">
-                    Start Your Check-In
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </span>
+                <Button onClick={handleStartCheckIn} size="lg" className="bg-teal-600 hover:bg-teal-700 text-white">
+                  Start Your Check-In
+                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
             </CardContent>
@@ -236,26 +210,20 @@ export function CheckInInterface() {
     )
   }
 
-  if (stage === "processing") {
-    return (
-      <div className="container mx-auto px-4 py-24">
-        <Card className="max-w-2xl mx-auto shadow-lg border-2 border-gray-100 dark:border-gray-800">
-          <CardContent className="p-8 flex flex-col items-center justify-center min-h-[400px] text-center">
-            <Brain className="h-16 w-16 text-teal-600 dark:text-teal-400 mb-6 animate-pulse" />
-            <h2 className="text-2xl font-bold text-teal-700 dark:text-teal-400 mb-2">Analyzing Your Responses</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-md">
-              Our Gemini AI is processing your check-in to provide personalized insights and recommendations for your
-              mental wellness.
-            </p>
-            <div className="w-full max-w-md mb-4">
-              <Progress value={progress} className="h-2" />
-            </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{progress}% complete</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  // if (stage === "processing") {
+  //   return (
+  //     <div className="container mx-auto px-4 py-24">
+  //       <Card className="max-w-2xl mx-auto shadow-lg border-2">
+  //         <CardContent className="p-8 flex flex-col items-center text-center">
+  //           <Brain className="h-16 w-16 text-teal-600 mb-6 animate-pulse" />
+  //           <h2 className="text-2xl font-bold text-teal-700 mb-2">Analyzing...</h2>
+  //           <Progress value={progress} className="w-full max-w-md my-4" />
+  //           <p className="text-gray-500">{progress}% complete</p>
+  //         </CardContent>
+  //       </Card>
+  //     </div>
+  //   )
+  // }
 
   if (stage === "analysis" && emotionAnalysis) {
     return (
@@ -328,24 +296,9 @@ export function CheckInInterface() {
     )
   }
 
-  // Conversation stage
   return (
     <div className="container mx-auto px-4 py-24">
-      <Card className="max-w-2xl mx-auto shadow-lg border-2 border-gray-100 dark:border-gray-800">
-        <CardHeader className="px-6 py-4 border-b">
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src="/mindmosaic-avatar.png" alt="MindMosaic AI" />
-              <AvatarFallback>
-                <Brain className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="text-sm font-medium">MindMosaic AI</CardTitle>
-              <CardDescription className="text-xs">Your Gemini-powered mental wellness companion</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
+      <Card className="max-w-2xl mx-auto shadow-lg border-2">
         <CardContent className="p-0">
           <div className="flex flex-col h-[500px]">
             <div className="flex-1 overflow-y-auto p-4 space-y-4" id="chat-container">
@@ -356,14 +309,13 @@ export function CheckInInterface() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
                     className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
                       className={`max-w-[80%] rounded-lg p-3 ${
                         message.role === "user"
                           ? "bg-teal-600 text-white"
-                          : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                          : "bg-white border dark:bg-gray-800 dark:border-gray-700"
                       }`}
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -376,44 +328,39 @@ export function CheckInInterface() {
                     </div>
                   </motion.div>
                 ))}
-                {isLoading && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-teal-600 dark:bg-teal-400 animate-pulse"></div>
-                        <div
-                          className="w-2 h-2 rounded-full bg-teal-600 dark:bg-teal-400 animate-pulse"
-                          style={{ animationDelay: "0.2s" }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 rounded-full bg-teal-600 dark:bg-teal-400 animate-pulse"
-                          style={{ animationDelay: "0.4s" }}
-                        ></div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
               </AnimatePresence>
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Updated input section with Analyze Button */}
             <div className="p-4 border-t">
-              <div className="flex items-end gap-2">
-                <Textarea
-                  value={input}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type your response..."
-                  className="flex-1 resize-none min-h-[80px]"
-                  disabled={isLoading}
-                />
+              <div className="flex flex-col gap-4">
+                <div className="flex items-end gap-2">
+                  <Textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type your response..."
+                    className="flex-1 resize-none min-h-[80px]"
+                    disabled={isLoading}
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={isLoading || !input.trim()}
+                    size="icon"
+                    className="h-10 w-10 bg-teal-600 hover:bg-teal-700 text-white"
+                  >
+                    <Send className="h-5 w-5" />
+                  </Button>
+                </div>
+
                 <Button
-                  onClick={handleSendMessage}
-                  disabled={isLoading || !input.trim()}
-                  size="icon"
-                  className="h-10 w-10 bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-700 text-white"
+                  onClick={() => setStage("processing")}
+                  size="lg"
+                  className="w-full flex items-center justify-center gap-2 rounded-md bg-teal-600 hover:bg-teal-700 text-white font-semibold transition-all duration-200"
                 >
-                  <Send className="h-5 w-5" />
+                  <Brain className="h-5 w-5" />
+                  Analyze Now
                 </Button>
               </div>
             </div>
