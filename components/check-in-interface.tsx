@@ -23,6 +23,9 @@ type SentimentAnalysis = {
   happiness: number;
   anxiety: number;
   energy: number;
+  anger: number;
+  sadness: number;
+  calmness: number;
 };
 
 const initialMessages: Message[] = [
@@ -223,7 +226,7 @@ export function CheckInInterface() {
     return (
       <div className="container mx-auto px-4 py-24">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <Card className="max-w-4xl mx-auto shadow-lg border-2 border-gray-100 dark:border-gray-800">
+          <Card className="max-w-2xl mx-auto shadow-lg border-2 border-gray-100 dark:border-gray-800">
             <CardContent className="p-8">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400 mb-4">
@@ -234,23 +237,23 @@ export function CheckInInterface() {
                   Thank you for sharing. We've analyzed your responses and prepared personalized insights.
                 </p>
               </div>
-  
+
               {analysis && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                   {[
-                    { label: "Happiness", value: analysis.happiness ?? 0, color: "bg-green-500" },
-                    { label: "Energy", value: analysis.energy ?? 0, color: "bg-blue-400" },
-                    { label: "Anxiety", value: analysis.anxiety ?? 0, color: "bg-orange-500" },
-                    { label: "Anger", value: (100 - (analysis.happiness ?? 0)) / 2, color: "bg-red-500" },
-                    { label: "Sadness", value: (analysis.anxiety ?? 0) / 2, color: "bg-purple-500" },
-                    { label: "Calmness", value: (analysis.happiness ?? 0 + analysis.energy ?? 0) / 2, color: "bg-cyan-500" },
+                    { label: "Happiness", value: analysis.happiness, color: "bg-green-500" },
+                    { label: "Energy", value: analysis.energy, color: "bg-blue-500" },
+                    { label: "Anxiety", value: analysis.anxiety, color: "bg-orange-500" },
+                    { label: "Anger", value: analysis.anger, color: "bg-red-500" },
+                    { label: "Sadness", value: analysis.sadness, color: "bg-blue-500" },
+                    { label: "Calmness", value: analysis.calmness, color: "bg-purple-500" }
                   ].map((metric) => (
                     <Card key={metric.label} className="overflow-hidden">
                       <CardHeader className="p-4 pb-2">
                         <CardTitle className="text-sm font-medium">{metric.label}</CardTitle>
                       </CardHeader>
                       <CardContent className="p-4 pt-0">
-                        <div className="text-2xl font-bold">{Math.round(metric.value)}%</div>
+                        <div className="text-2xl font-bold">{metric.value}%</div>
                         <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
                           <motion.div
                             className={`h-full ${metric.color}`}
@@ -264,7 +267,7 @@ export function CheckInInterface() {
                   ))}
                 </div>
               )}
-  
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
                   onClick={handleViewResults}
@@ -273,12 +276,7 @@ export function CheckInInterface() {
                 >
                   View Your Dashboard
                 </Button>
-                <Button
-                  onClick={handleRestartCheckIn}
-                  variant="outline"
-                  size="lg"
-                  className="flex items-center gap-2"
-                >
+                <Button onClick={handleRestartCheckIn} variant="outline" size="lg" className="flex items-center gap-2">
                   <RefreshCw className="h-4 w-4" />
                   Start New Check-In
                 </Button>
@@ -287,9 +285,9 @@ export function CheckInInterface() {
           </Card>
         </motion.div>
       </div>
-    );
+    )
   }
-  
+
 
   return (
     <div className="container mx-auto px-4 py-24">

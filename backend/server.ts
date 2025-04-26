@@ -93,7 +93,7 @@ app.post('/api/analyze', async (req, res) => {
     ${conversationString}
     
     1. Provide a thoughtful, empathetic response to the user's last message.
-    2. Analyze the sentiment in their message (happiness: 0-100, anxiety: 0-100, energy: 0-100).
+    2. Analyze the sentiment in their message (happiness: 0-100, anxiety: 0-100, energy: 0-100, anger: 0-100, sadness: 0-100, calmness: 0-100).
     3. Identify key topics they've mentioned (e.g., work, relationships, health).
     4. Suggest 2-3 personalized recommendations based on their emotional state.
     5. Determine if we should complete the check-in (true/false). Complete after 3-5 meaningful exchanges.
@@ -104,7 +104,10 @@ app.post('/api/analyze', async (req, res) => {
       "sentiment": {
         "happiness": number,
         "anxiety": number,
-        "energy": number
+        "energy": number,
+        "anger": number,
+        "sadness": number,
+        "calmness": number
       },
       "topics": ["topic1", "topic2"],
       "recommendations": ["recommendation1", "recommendation2"],
@@ -114,6 +117,17 @@ app.post('/api/analyze', async (req, res) => {
 
     const text = await generateWithGemini(prompt);
     const result = JSON.parse(text);
+    
+    // Ensure the sentiment object has all required fields with default values
+    result.sentiment = {
+      happiness: result.sentiment?.happiness || 0,
+      anxiety: result.sentiment?.anxiety || 0,
+      energy: result.sentiment?.energy || 0,
+      anger: result.sentiment?.anger || 0,
+      sadness: result.sentiment?.sadness || 0,
+      calmness: result.sentiment?.calmness || 0
+    };
+    
     res.json(result);
   } catch (error) {
     console.error("Error analyzing response:", error);

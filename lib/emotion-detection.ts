@@ -15,6 +15,8 @@ export type EmotionAnalysisResult = {
   overallSentiment: number // -1 to 1 scale
   stressLevel: number // 0 to 100
   anxietyLevel: number // 0 to 100
+  angerLevel: number // 0 to 100
+  sadnessLevel: number // 0 to 100
   recommendations: Recommendation[]
 }
 
@@ -252,6 +254,8 @@ export async function detectEmotions(messages: any[]): Promise<EmotionAnalysisRe
   3. Rate the overall sentiment on a scale from -1 (very negative) to 1 (very positive)
   4. Estimate the user's stress level (0-100)
   5. Estimate the user's anxiety level (0-100)
+  6. Estimate the user's anger level (0-100)
+  7. Estimate the user's sadness level (0-100)
   
   Format your response as JSON:
   {
@@ -265,7 +269,9 @@ export async function detectEmotions(messages: any[]): Promise<EmotionAnalysisRe
     } or null,
     "overallSentiment": number between -1 and 1,
     "stressLevel": number between 0-100,
-    "anxietyLevel": number between 0-100
+    "anxietyLevel": number between 0-100,
+    "angerLevel": number between 0-100,
+    "sadnessLevel": number between 0-100
   }
   `
 
@@ -304,6 +310,8 @@ export async function detectEmotions(messages: any[]): Promise<EmotionAnalysisRe
       overallSentiment: result.overallSentiment,
       stressLevel: result.stressLevel,
       anxietyLevel: result.anxietyLevel,
+      angerLevel: result.angerLevel,
+      sadnessLevel: result.sadnessLevel,
       recommendations,
     }
   } catch (error) {
@@ -321,6 +329,8 @@ export async function detectEmotions(messages: any[]): Promise<EmotionAnalysisRe
       overallSentiment: 0,
       stressLevel: 50,
       anxietyLevel: 50,
+      angerLevel: 0,
+      sadnessLevel: 0,
       recommendations: getRecommendations(fallbackEmotion, null, 50, 50),
     }
   }

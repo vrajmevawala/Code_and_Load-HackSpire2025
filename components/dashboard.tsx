@@ -29,6 +29,8 @@ type EmotionData = {
   happiness: number
   anxiety: number
   energy: number
+  anger: number
+  sadness: number
 }
 
 type Recommendation = {
@@ -62,13 +64,13 @@ export function Dashboard() {
 
       // Mock data
       setEmotionData([
-        { date: "Mon", happiness: 65, anxiety: 40, energy: 70 },
-        { date: "Tue", happiness: 60, anxiety: 45, energy: 65 },
-        { date: "Wed", happiness: 70, anxiety: 35, energy: 75 },
-        { date: "Thu", happiness: 75, anxiety: 30, energy: 80 },
-        { date: "Fri", happiness: 72, anxiety: 32, energy: 78 },
-        { date: "Sat", happiness: 80, anxiety: 25, energy: 85 },
-        { date: "Sun", happiness: 78, anxiety: 28, energy: 82 },
+        { date: "Mon", happiness: 65, anxiety: 40, energy: 70, anger: 20, sadness: 30 },
+        { date: "Tue", happiness: 60, anxiety: 45, energy: 65, anger: 25, sadness: 35 },
+        { date: "Wed", happiness: 70, anxiety: 35, energy: 75, anger: 15, sadness: 25 },
+        { date: "Thu", happiness: 75, anxiety: 30, energy: 80, anger: 10, sadness: 20 },
+        { date: "Fri", happiness: 72, anxiety: 32, energy: 78, anger: 12, sadness: 22 },
+        { date: "Sat", happiness: 80, anxiety: 25, energy: 85, anger: 8, sadness: 15 },
+        { date: "Sun", happiness: 78, anxiety: 28, energy: 82, anger: 10, sadness: 18 },
       ])
 
       setRecommendations([
@@ -159,6 +161,10 @@ export function Dashboard() {
         return "#ef4444" // Vibrant red
       case "energy":
         return "#3b82f6" // Vibrant blue
+      case "anger":
+        return "#ef4444" // Vibrant red
+      case "sadness":
+        return "#3b82f6" // Vibrant blue
       default:
         return "#22c55e"
     }
@@ -180,10 +186,20 @@ export function Dashboard() {
   const pieData = [
     { name: "Happiness", value: 65 },
     { name: "Anxiety", value: 35 },
+    { name: "Anger", value: 15 },
+    { name: "Sadness", value: 25 }
   ]
 
   // Updated vibrant colors for pie chart
-  const COLORS = ["#22c55e", "#ef4444", "#3b82f6"]
+  const COLORS = ["#22c55e", "#ef4444", "#f97316", "#3b82f6"]
+
+  const metrics = [
+    { label: "Happiness", value: 75, color: "bg-green-500" },
+    { label: "Anxiety", value: 30, color: "bg-orange-500" },
+    { label: "Energy", value: 80, color: "bg-yellow-500" },
+    { label: "Anger", value: 15, color: "bg-red-500" },
+    { label: "Sadness", value: 25, color: "bg-blue-500" }
+  ]
 
   return (
     <div className="container mx-auto px-4 py-24">
@@ -278,6 +294,14 @@ export function Dashboard() {
                           <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
                           <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                         </linearGradient>
+                        <linearGradient id="colorAnger" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f97316" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="colorSadness" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                        </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                       <XAxis dataKey="date" />
@@ -317,13 +341,31 @@ export function Dashboard() {
                         fill="url(#colorEnergy)"
                         name="Energy"
                       />
+                      <Area
+                        type="monotone"
+                        dataKey="anger"
+                        stroke="#f97316"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#colorAnger)"
+                        name="Anger"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="sadness"
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#colorSadness)"
+                        name="Sadness"
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
               <CardFooter className="bg-gray-50 dark:bg-gray-800/50 pt-3 pb-3 flex justify-between">
                 <div className="flex items-center gap-6">
-                  {["happiness", "anxiety", "energy"].map((type) => (
+                  {["happiness", "anxiety", "energy", "anger", "sadness"].map((type) => (
                     <div key={type} className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getEmotionColor(type) }} />
                       <span className="text-sm capitalize">{type}</span>
@@ -513,6 +555,28 @@ export function Dashboard() {
               </Tabs>
             </CardContent>
           </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {metrics.map((metric, index) => (
+              <Card key={index} className="border-2 hover:border-teal-200 dark:hover:border-teal-800 transition-all">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-teal-700 dark:text-teal-400">{metric.label}</CardTitle>
+                  <CardDescription>Current level</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{metric.value}%</div>
+                  <div className="w-full h-2 bg-gray-100 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
+                    <motion.div
+                      className={`h-full ${metric.color}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${metric.value}%` }}
+                      transition={{ duration: 1, delay: 0.2 }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </motion.div>
       )}
     </div>
